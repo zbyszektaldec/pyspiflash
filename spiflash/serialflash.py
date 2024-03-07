@@ -1440,7 +1440,8 @@ class MT25QFlashDevice(_Gen25FlashDevice):
 
     JEDEC_ID = 0x20
     DEVICES = {0xBB: 'MT25Q'}
-    SIZES = {0x17: 64 << 20, 0x18: 128 << 20, 0x19: 256 << 20, 0x20: 512 << 20, 0x21: 1024 << 20, 0x22: 2048 << 20}
+    SIZES = {0x17: 64 << 20, 0x18: 128 << 20, 0x19: 256 << 20,
+    0x20: 512 << 20, 0x21: 1024 << 20, 0x22: 2048 << 20}
     SPI_FREQ_MAX = 166  # MHz, using 3 dummy bytes
     TIMINGS = {'page': (0.00012, 0.005),  # 0.5/5 ms
                'subsector': (0.3, 3.0),  # 300/3000 ms
