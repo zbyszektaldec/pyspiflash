@@ -1433,3 +1433,45 @@ class N25QFlashDevice(_Gen25FlashDevice):
                           (0 << self.SECTOR_LOCK_DOWN) |
                           (0 << self.SECTOR_WRITE_LOCK)))
         self._spi.exchange(wcmd)
+
+
+class MT25QFlashDevice(_Gen25FlashDevice):
+    """Micron MT25Q flash device implementation"""
+
+    JEDEC_ID = 0x20
+    DEVICES = {0xBB: 'MT25Q'}
+    SIZES = {0x17: 64 << 20, 0x18: 128 << 20, 0x19: 256 << 20, 0x20: 512 << 20, 0x21: 1024 << 20, 0x22: 2048 << 20}
+    SPI_FREQ_MAX = 166  # MHz, using 3 dummy bytes
+    TIMINGS = {'page': (0.00012, 0.005),  # 0.5/5 ms
+               'subsector': (0.3, 3.0),  # 300/3000 ms
+               'sector': (0.7, 3.0),  # 700/3000 ms
+               'bulk': (60, 120)}  # seconds
+    FEATURES = SerialFlash.FEAT_SECTERASE | SerialFlash.FEAT_SUBSECTERASE
+    CMD_WRLR = 0xE5
+    SECTOR_LOCK_DOWN = 1
+    SECTOR_WRITE_LOCK = 0
+
+    def __init__(self, spi, jedec):
+        super(N25QFlashDevice, self).__init__(spi)
+        if not N25QFlashDevice.match(jedec):
+            raise SerialFlashUnknownJedec(jedec)
+        device, capacity = jedec[1:]
+        self._size = self.SIZES[capacity]
+        self._device = self.DEVICES[device]
+
+    def __str__(self):
+        return 'Micron %s%03d %s' % \
+            (self._device, len(self) >> 17,
+             pretty_size(self._size, lim_m=1 << 20))
+
+    def unlock(self):
+        self._enable_write()
+        for sector in range(len(self) >> 16):
+            addr = sector << 16
+            wcmd = bytes((self.CMD_WRLR,
+                          (addr >> 16) & 0xff,
+                          (addr >> 8) & 0xff,
+                          (addr >> 0) & 0xff,
+                          (0 << self.SECTOR_LOCK_DOWN) |
+                          (0 << self.SECTOR_WRITE_LOCK)))
+        self._spi.exchange(wcmd)
